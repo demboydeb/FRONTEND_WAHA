@@ -11,7 +11,7 @@ const mockSocket = {
   connected: false,
 }
 
-vi.mocked(io).mockReturnValue(mockSocket as ReturnType<typeof io>)
+vi.mocked(io).mockReturnValue(mockSocket as unknown as ReturnType<typeof io>)
 
 describe('Socket service', () => {
   beforeEach(() => {

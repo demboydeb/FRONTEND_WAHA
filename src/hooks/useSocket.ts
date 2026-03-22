@@ -78,10 +78,14 @@ export const useSessionSocket = (sessionId: string) => {
   const socket = useSocket()
 
   useEffect(() => {
-    if (sessionId) {
-      socket.joinSession(sessionId)
+    if (!sessionId) return
+    socket.joinSession(sessionId)
+    return () => {
+      socket.leaveSession(sessionId)
     }
-  }, [sessionId, socket])
+    // socket is a stable singleton — intentionally omitted from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
 
   return socket
 }

@@ -173,7 +173,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                 formValues.description ? ['Description', formValues.description] : null,
                 formValues.webhookUrl ? ['Webhook', formValues.webhookUrl] : null,
               ]
-                .filter(Boolean)
+                .filter((x): x is string[] => x !== null)
                 .map(([k, v]) => (
                   <div key={k} className="flex justify-between px-4 py-2 text-sm">
                     <span className="text-[#5a6478]">{k}</span>

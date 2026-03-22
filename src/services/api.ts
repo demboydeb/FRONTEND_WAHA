@@ -14,7 +14,7 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers.set('Authorization', `Bearer ${token}`)
     }
     return config
   },
@@ -49,7 +49,7 @@ apiClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`
+          originalRequest.headers.set('Authorization', `Bearer ${token}`)
           return apiClient(originalRequest)
         })
       }
@@ -69,7 +69,7 @@ apiClient.interceptors.response.use(
         const { accessToken: newAccess, refreshToken: newRefresh } = response.data
         setTokens(newAccess, newRefresh)
         processQueue(null, newAccess)
-        originalRequest.headers.Authorization = `Bearer ${newAccess}`
+        originalRequest.headers.set('Authorization', `Bearer ${newAccess}`)
         return apiClient(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)

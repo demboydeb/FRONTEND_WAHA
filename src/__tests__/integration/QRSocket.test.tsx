@@ -12,7 +12,7 @@ const mockSocket = {
   connected: true,
 }
 
-vi.mocked(io).mockReturnValue(mockSocket as ReturnType<typeof io>)
+vi.mocked(io).mockReturnValue(mockSocket as unknown as ReturnType<typeof io>)
 
 describe('QR Code Socket integration', () => {
   beforeEach(() => {

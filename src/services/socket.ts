@@ -2,6 +2,7 @@ import { io, Socket } from 'socket.io-client'
 
 class SocketService {
   private socket: Socket | null = null
+  private joinedSessions = new Set<string>()
 
   connect(token: string): void {
     if (this.socket?.connected) return
@@ -31,18 +32,27 @@ class SocketService {
     if (this.socket) {
       this.socket.disconnect()
       this.socket = null
+      this.joinedSessions.clear()
     }
   }
 
   joinSession(sessionId: string): void {
+    if (this.joinedSessions.has(sessionId)) return
     this.socket?.emit('session:join', sessionId)
+    this.joinedSessions.add(sessionId)
   }
 
-  on(event: string, callback: (...args: unknown[]) => void): void {
+  leaveSession(sessionId: string): void {
+    this.joinedSessions.delete(sessionId)
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string, callback: (...args: any[]) => void): void {
     this.socket?.on(event, callback)
   }
 
-  off(event: string, callback?: (...args: unknown[]) => void): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  off(event: string, callback?: (...args: any[]) => void): void {
     this.socket?.off(event, callback)
   }
 
