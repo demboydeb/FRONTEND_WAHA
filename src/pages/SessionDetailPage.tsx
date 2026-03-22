@@ -10,6 +10,7 @@ import { PairingCodeInput } from '@/components/qr/PairingCodeInput'
 import { EventConfigPanel } from '@/components/events/EventConfigPanel'
 import { SendMessageForm } from '@/components/messages/SendMessageForm'
 import { ActivityFeed } from '@/components/events/ActivityFeed'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { useUIStore } from '@/stores/ui.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useSessionSocket } from '@/hooks/useSocket'
@@ -275,30 +276,36 @@ export const SessionDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'events' && (
-        <EventConfigPanel sessionId={session.id} />
+        <ErrorBoundary>
+          <EventConfigPanel sessionId={session.id} />
+        </ErrorBoundary>
       )}
 
       {activeTab === 'messages' && (
-        <Card>
-          <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Send Message</h2>
-          {effectiveStatus === 'CONNECTED' ? (
-            <SendMessageForm
-              sessionId={session.id}
-              onSuccess={() => addToast({ type: 'success', title: 'Message sent' })}
-            />
-          ) : (
-            <p className="text-sm text-[#5a6478]">
-              Session must be connected to send messages. Current status: {effectiveStatus}
-            </p>
-          )}
-        </Card>
+        <ErrorBoundary>
+          <Card>
+            <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Send Message</h2>
+            {effectiveStatus === 'CONNECTED' ? (
+              <SendMessageForm
+                sessionId={session.id}
+                onSuccess={() => addToast({ type: 'success', title: 'Message sent' })}
+              />
+            ) : (
+              <p className="text-sm text-[#5a6478]">
+                Session must be connected to send messages. Current status: {effectiveStatus}
+              </p>
+            )}
+          </Card>
+        </ErrorBoundary>
       )}
 
       {activeTab === 'activity' && (
-        <Card>
-          <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Activity Feed</h2>
-          <ActivityFeed sessionId={session.id} />
-        </Card>
+        <ErrorBoundary>
+          <Card>
+            <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Activity Feed</h2>
+            <ActivityFeed sessionId={session.id} />
+          </Card>
+        </ErrorBoundary>
       )}
     </div>
   )

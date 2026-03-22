@@ -39,8 +39,8 @@ export const EventConfigPanel: React.FC<EventConfigPanelProps> = ({ sessionId })
   const { data: events, isLoading } = useQuery<EventConfig[]>({
     queryKey: ['events', sessionId],
     queryFn: async () => {
-      const response = await apiClient.get<EventConfig[]>(`/sessions/${sessionId}/events`)
-      return response.data
+      const response = await apiClient.get<{ configs: EventConfig[] }>(`/sessions/${sessionId}/events`)
+      return response.data.configs ?? []
     },
     enabled: !!sessionId,
   })
