@@ -1,13 +1,223 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button } from '@/components/common/Button'
+import { Badge } from '@/components/common/Badge'
 import { Card } from '@/components/common/Card'
+import { Spinner } from '@/components/common/Spinner'
+import { QRCodeViewer } from '@/components/qr/QRCodeViewer'
+import { PairingCodeInput } from '@/components/qr/PairingCodeInput'
+import { useUIStore } from '@/stores/ui.store'
+import { useSessionSocket } from '@/hooks/useSocket'
+import apiClient from '@/services/api'
+import type { Session } from '@/types'
 
 export const SessionDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const addToast = useUIStore((s) => s.addToast)
+  const queryClient = useQueryClient()
+
+  const [qrData, setQrData] = useState<string | null>(null)
+  const [qrExpiresAt, setQrExpiresAt] = useState<string | null>(null)
+  const [pairingCode, setPairingCode] = useState<string | null>(null)
+  const [pairingLoading, setPairingLoading] = useState(false)
+
+  const socket = useSessionSocket(id ?? '')
+
+  // Listen for QR updates
+  React.useEffect(() => {
+    const handleQr = (data: { sessionId: string; qr: string; expiresAt: string }) => {
+      if (data.sessionId === id) {
+        setQrData(data.qr)
+        setQrExpiresAt(data.expiresAt)
+      }
+    }
+    const handlePairingCode = (data: { sessionId: string; code: string }) => {
+      if (data.sessionId === id) {
+        setPairingCode(data.code)
+        setPairingLoading(false)
+      }
+    }
+    socket.on('session:qr', handleQr)
+    socket.on('session:pairing_code', handlePairingCode)
+    return () => {
+      socket.off('session:qr', handleQr)
+      socket.off('session:pairing_code', handlePairingCode)
+    }
+  }, [socket, id])
+
+  const { data: session, isLoading } = useQuery({
+    queryKey: ['session', id],
+    queryFn: async () => {
+      const response = await apiClient.get<{ session: Session }>(`/sessions/${id}`)
+      return response.data.session
+    },
+    enabled: !!id,
+    refetchInterval: 5000,
+  })
+
+  const disconnectMutation = useMutation({
+    mutationFn: () => apiClient.post(`/sessions/${id}/disconnect`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', id] })
+      addToast({ type: 'info', title: 'Session disconnected' })
+    },
+  })
+
+  const reconnectMutation = useMutation({
+    mutationFn: () => apiClient.post(`/sessions/${id}/reconnect`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', id] })
+      addToast({ type: 'info', title: 'Reconnecting...' })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiClient.delete(`/sessions/${id}`),
+    onSuccess: () => {
+      addToast({ type: 'success', title: 'Session deleted' })
+      navigate('/sessions')
+    },
+  })
+
+  const handleRequestPairingCode = useCallback(async (phoneNumber: string) => {
+    setPairingLoading(true)
+    try {
+      await apiClient.post(`/sessions/${id}/reconnect`, { phoneNumber })
+    } catch {
+      setPairingLoading(false)
+      addToast({ type: 'error', title: 'Failed to request pairing code' })
+    }
+  }, [id, addToast])
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[#ef4444]">Session not found</p>
+        <Button className="mt-4" variant="ghost" onClick={() => navigate('/sessions')}>
+          Back to Sessions
+        </Button>
+      </div>
+    )
+  }
+
+  const statusVariant = {
+    CONNECTED: 'green',
+    DISCONNECTED: 'gray',
+    ERROR: 'red',
+    BANNED: 'red',
+    INITIALIZING: 'blue',
+    QR_PENDING: 'cyan',
+    PAIRING: 'purple',
+    RECONNECTING: 'orange',
+  } as const
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-[#e8ecf4] mb-6">Session Detail</h1>
-      <Card>
-        <p className="text-[#5a6478]">Session detail — Sprint 2</p>
-      </Card>
+    <div className="max-w-4xl mx-auto">
+      {/* Back + header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/sessions')}>
+          ← Back
+        </Button>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-[#e8ecf4]">{session.name}</h1>
+          <Badge variant={statusVariant[session.status]}>{session.status}</Badge>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Session info */}
+        <Card>
+          <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Session Info</h2>
+          <div className="flex flex-col gap-2 text-sm">
+            {[
+              ['ID', session.id],
+              ['Phone', session.phoneNumber ?? '—'],
+              ['Method', session.connectionMethod],
+              ['Webhook', session.webhookUrl ?? '—'],
+              ['Created', new Date(session.createdAt).toLocaleDateString()],
+            ].map(([k, v]) => (
+              <div key={k} className="flex justify-between">
+                <span className="text-[#5a6478]">{k}</span>
+                <span className="text-[#e8ecf4] font-mono text-xs truncate max-w-[200px]">{v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 flex-wrap mt-4 pt-4 border-t border-[#252b3b]">
+            {session.status === 'CONNECTED' && (
+              <Button
+                size="sm"
+                variant="outline"
+                loading={disconnectMutation.isPending}
+                onClick={() => disconnectMutation.mutate()}
+              >
+                Disconnect
+              </Button>
+            )}
+            {(session.status === 'DISCONNECTED' || session.status === 'ERROR') && (
+              <Button
+                size="sm"
+                variant="secondary"
+                loading={reconnectMutation.isPending}
+                onClick={() => reconnectMutation.mutate()}
+              >
+                Reconnect
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="danger"
+              loading={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate()}
+            >
+              Delete
+            </Button>
+          </div>
+        </Card>
+
+        {/* QR / Pairing */}
+        {(session.status === 'QR_PENDING' || session.status === 'INITIALIZING') && (
+          <div>
+            {session.connectionMethod === 'QR_CODE' ? (
+              <QRCodeViewer
+                qrData={qrData}
+                expiresAt={qrExpiresAt}
+                sessionId={session.id}
+              />
+            ) : (
+              <PairingCodeInput
+                pairingCode={pairingCode}
+                loading={pairingLoading}
+                onRequestCode={handleRequestPairingCode}
+              />
+            )}
+          </div>
+        )}
+
+        {session.status === 'CONNECTED' && (
+          <Card>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-3 w-3 rounded-full bg-[#22c55e]" />
+              <p className="text-sm font-semibold text-[#22c55e]">Connected</p>
+            </div>
+            <p className="text-sm text-[#8892a8]">
+              WhatsApp is active on{' '}
+              <span className="text-[#e8ecf4] font-mono">{session.phoneNumber}</span>
+            </p>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }
