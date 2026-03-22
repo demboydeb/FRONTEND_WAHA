@@ -9,10 +9,6 @@ import userEvent from '@testing-library/user-event'
 import { useUIStore } from '@/stores/ui.store'
 import { ToastContainer } from '@/components/common/Toast'
 
-const renderWithToast = () => {
-  const { result } = { result: { current: useUIStore.getState() } }
-  return result
-}
 
 describe('Toast', () => {
   beforeEach(() => {

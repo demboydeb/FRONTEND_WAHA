@@ -7,6 +7,7 @@ import { RegisterPage } from '@/pages/RegisterPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { SessionsPage } from '@/pages/SessionsPage'
 import { SessionDetailPage } from '@/pages/SessionDetailPage'
+import { AntiBanPage } from '@/pages/AntiBanPage'
 import { ApiKeysPage } from '@/pages/ApiKeysPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
@@ -34,6 +35,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/sessions" element={<SessionsPage />} />
               <Route path="/sessions/:id" element={<SessionDetailPage />} />
+              <Route path="/sessions/:id/antiban" element={<AntiBanPage />} />
               <Route path="/api-keys" element={<ApiKeysPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

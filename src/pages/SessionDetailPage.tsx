@@ -203,6 +203,17 @@ export const SessionDetailPage: React.FC = () => {
               ))}
             </div>
 
+            {/* Anti-Ban link */}
+            <div className="mt-4 pt-4 border-t border-[#252b3b]">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate(`/sessions/${id}/antiban`)}
+              >
+                Anti-Ban Dashboard →
+              </Button>
+            </div>
+
             {/* Actions */}
             <div className="flex gap-2 flex-wrap mt-4 pt-4 border-t border-[#252b3b]">
               {effectiveStatus === 'CONNECTED' && (
