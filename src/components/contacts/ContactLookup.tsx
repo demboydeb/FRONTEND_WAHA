@@ -125,9 +125,17 @@ export const ContactLookup: React.FC<ContactLookupProps> = ({ sessionId }) => {
         </div>
       )}
 
-      {checkMutation.isError && (
-        <p className="text-sm text-[#ef4444]">Error checking contact. Please try again.</p>
-      )}
+      {checkMutation.isError && (() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const status = (checkMutation.error as any)?.response?.status
+        return (
+          <div className={`text-sm p-3 rounded-[10px] ${status === 503 ? 'text-[#eab308] bg-[#eab308]/10 border border-[#eab308]/20' : 'text-[#ef4444]'}`}>
+            {status === 503
+              ? 'Session not connected — reconnect the session first.'
+              : 'Error checking contact. Please try again.'}
+          </div>
+        )
+      })()}
     </div>
   )
 }

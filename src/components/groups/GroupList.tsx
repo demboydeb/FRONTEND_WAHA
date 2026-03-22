@@ -3,6 +3,7 @@ import { useGroups } from '@/hooks/useGroups'
 import { GroupCard } from './GroupCard'
 import { Spinner } from '@/components/common/Spinner'
 import type { Group } from '@/types'
+import type { AxiosError } from 'axios'
 
 interface GroupListProps {
   sessionId: string
@@ -10,9 +11,14 @@ interface GroupListProps {
 }
 
 export const GroupList: React.FC<GroupListProps> = ({ sessionId, onSelectGroup }) => {
-  const { data, isLoading, isError } = useGroups(sessionId)
+  const { data, isLoading, isError, error } = useGroups(sessionId)
 
   const groups = data?.groups ?? []
+
+  const is503 = isError && (error as AxiosError)?.response?.status === 503
+  const errorMsg = is503
+    ? 'Session not connected — reconnect the session first.'
+    : 'Failed to load groups. Please try again.'
 
   return (
     <div data-testid="group-list" className="space-y-2">
@@ -23,9 +29,9 @@ export const GroupList: React.FC<GroupListProps> = ({ sessionId, onSelectGroup }
       )}
 
       {isError && (
-        <p className="text-sm text-[#ef4444] text-center py-4">
-          Failed to load groups. Please try again.
-        </p>
+        <div className={`text-sm text-center py-4 rounded-[10px] px-3 ${is503 ? 'text-[#eab308] bg-[#eab308]/10 border border-[#eab308]/20' : 'text-[#ef4444]'}`}>
+          {errorMsg}
+        </div>
       )}
 
       {!isLoading && !isError && groups.length === 0 && (
