@@ -247,23 +247,15 @@ export const SessionDetailPage: React.FC = () => {
             </div>
           </Card>
 
-          {/* QR / Pairing — effectiveStatus reacts instantly to socket events */}
+          {/* QR — toujours QR_CODE (PAIRING_CODE désactivé) */}
           {effectiveStatus !== 'CONNECTED' &&
             (effectiveStatus === 'QR_PENDING' || effectiveStatus === 'INITIALIZING') && (
             <div>
-              {session.connectionMethod === 'QR_CODE' ? (
-                <QRCodeViewer
-                  qrData={qrData}
-                  expiresAt={qrExpiresAt}
-                  sessionId={session.id}
-                />
-              ) : (
-                <PairingCodeInput
-                  pairingCode={pairingCode}
-                  loading={pairingLoading}
-                  onRequestCode={handleRequestPairingCode}
-                />
-              )}
+              <QRCodeViewer
+                qrData={qrData}
+                expiresAt={qrExpiresAt}
+                sessionId={session.id}
+              />
             </div>
           )}
 

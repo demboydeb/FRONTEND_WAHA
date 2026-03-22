@@ -11,7 +11,13 @@ const createSessionSchema = z.object({
   description: z.string().optional(),
   connectionMethod: z.enum(['QR_CODE', 'PAIRING_CODE']),
   phoneNumber: z.string().optional(),
-  webhookUrl: z.string().url('Invalid webhook URL').optional().or(z.literal('')),
+  webhookUrl: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || v === '' || /^https?:\/\/.+/.test(v),
+      { message: 'Webhook URL must start with http:// or https://' }
+    ),
 })
 
 type CreateSessionForm = z.infer<typeof createSessionSchema>
@@ -122,43 +128,34 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         {step === 1 && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-[#8892a8] mb-1">Choose connection method</p>
-            {(['QR_CODE', 'PAIRING_CODE'] as const).map((method) => (
-              <label
-                key={method}
-                className={[
-                  'flex items-center gap-3 p-4 rounded-[10px] border cursor-pointer transition-colors',
-                  formValues.connectionMethod === method
-                    ? 'border-[#22c55e] bg-[#22c55e]/5'
-                    : 'border-[#252b3b] hover:border-[#3b4460]',
-                ].join(' ')}
-              >
-                <input
-                  type="radio"
-                  value={method}
-                  className="accent-[#22c55e]"
-                  {...register('connectionMethod')}
-                />
-                <div>
-                  <p className="text-sm font-medium text-[#e8ecf4]">
-                    {method === 'QR_CODE' ? 'QR Code' : 'Pairing Code'}
-                  </p>
-                  <p className="text-xs text-[#5a6478]">
-                    {method === 'QR_CODE'
-                      ? 'Scan a QR code with WhatsApp'
-                      : 'Use a phone number + 8-digit code'}
-                  </p>
-                </div>
-              </label>
-            ))}
-            {formValues.connectionMethod === 'PAIRING_CODE' && (
-              <Input
-                label="Phone Number"
-                type="tel"
-                placeholder="+33612345678"
-                error={errors.phoneNumber?.message}
-                {...register('phoneNumber')}
+
+            {/* QR Code — seule méthode disponible */}
+            <label className="flex items-center gap-3 p-4 rounded-[10px] border cursor-pointer transition-colors border-[#22c55e] bg-[#22c55e]/5">
+              <input
+                type="radio"
+                value="QR_CODE"
+                className="accent-[#22c55e]"
+                {...register('connectionMethod')}
               />
-            )}
+              <div>
+                <p className="text-sm font-medium text-[#e8ecf4]">QR Code</p>
+                <p className="text-xs text-[#5a6478]">Scan a QR code with WhatsApp</p>
+              </div>
+            </label>
+
+            {/* Pairing Code — désactivé */}
+            <div className="flex items-center gap-3 p-4 rounded-[10px] border border-[#252b3b] opacity-50 cursor-not-allowed">
+              <input type="radio" disabled className="accent-[#22c55e]" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-[#5a6478]">Pairing Code</p>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#252b3b] text-[#5a6478] font-mono">
+                    Coming soon
+                  </span>
+                </div>
+                <p className="text-xs text-[#3b4460]">Use a phone number + 8-digit code</p>
+              </div>
+            </div>
           </div>
         )}
 
