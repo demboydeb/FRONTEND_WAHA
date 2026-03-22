@@ -26,3 +26,14 @@ const localStorageMock = {
   clear: vi.fn(),
 }
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+
+// Mock navigator.clipboard
+const clipboardMock = {
+  writeText: vi.fn().mockResolvedValue(undefined),
+  readText: vi.fn().mockResolvedValue(''),
+}
+Object.defineProperty(navigator, 'clipboard', {
+  value: clipboardMock,
+  writable: true,
+  configurable: true,
+})
