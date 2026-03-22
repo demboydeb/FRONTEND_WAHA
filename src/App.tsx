@@ -10,6 +10,8 @@ import { SessionDetailPage } from '@/pages/SessionDetailPage'
 import { AntiBanPage } from '@/pages/AntiBanPage'
 import { ApiKeysPage } from '@/pages/ApiKeysPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { ContactsPage } from '@/pages/ContactsPage'
+import { GroupsPage } from '@/pages/GroupsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +40,8 @@ function App() {
               <Route path="/sessions/:id/antiban" element={<AntiBanPage />} />
               <Route path="/api-keys" element={<ApiKeysPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/groups" element={<GroupsPage />} />
             </Route>
           </Route>
 

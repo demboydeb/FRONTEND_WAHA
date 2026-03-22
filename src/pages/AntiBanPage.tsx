@@ -15,6 +15,7 @@ import { HealthGauge } from '@/components/antiban/HealthGauge'
 import { WarmupProgress } from '@/components/antiban/WarmupProgress'
 import { ThrottleSettings } from '@/components/antiban/ThrottleSettings'
 import { TemplateEditor } from '@/components/antiban/TemplateEditor'
+import { MediaConfigPanel } from '@/components/antiban/MediaConfigPanel'
 import apiClient from '@/services/api'
 import type { HealthScore, WarmupStatus } from '@/types'
 
@@ -205,6 +206,12 @@ export const AntiBanPage: React.FC = () => {
       <Card>
         <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Message Templates</h2>
         <TemplateEditor sessionId={id} />
+      </Card>
+
+      {/* Media config */}
+      <Card>
+        <h2 className="text-sm font-semibold text-[#e8ecf4] mb-4">Media Configuration</h2>
+        <MediaConfigPanel sessionId={id} />
       </Card>
     </div>
   )
